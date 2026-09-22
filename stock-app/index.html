@@ -3,223 +3,281 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>美股與總經情報站</title>
+    <title>美股新手村 - 全板塊股票導覽與走勢</title>
+    <!-- Tailwind CSS & Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
-    <style>
-        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 20px; background-color: #f8f9fa; color: #333; }
-        .container { max-width: 1000px; margin: 0 auto; }
-        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 25px; }
-        h2 { border-bottom: 2px solid #007bff; padding-bottom: 8px; color: #007bff; margin-top: 0; }
-        .search-box { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: center; }
-        input[type="text"] { padding: 10px 14px; font-size: 16px; border: 1px solid #ccc; border-radius: 6px; text-transform: uppercase; width: 180px; }
-        button { padding: 8px 14px; font-size: 14px; border: none; border-radius: 6px; cursor: pointer; background-color: #007bff; color: white; transition: background-color 0.2s; }
-        button:hover { background-color: #0056b3; }
-        .category-group { margin-bottom: 12px; background: #f1f3f5; padding: 10px 12px; border-radius: 8px; }
-        .category-title { font-weight: bold; margin-bottom: 6px; color: #495057; font-size: 14px; }
-        .chip-btn { background-color: white; color: #333; border: 1px solid #ced4da; margin-right: 6px; margin-bottom: 4px; }
-        .chip-btn:hover { background-color: #007bff; color: white; border-color: #007bff; }
-        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
-        th, td { border: 1px solid #dee2e6; padding: 10px; text-align: center; }
-        th { background-color: #f1f3f5; }
-        .loading { color: #6c757d; font-style: italic; }
-        .news-item { padding: 10px 0; border-bottom: 1px solid #eee; }
-        .news-item a { color: #007bff; text-decoration: none; font-weight: 500; }
-        .news-item a:hover { text-decoration: underline; }
-    </style>
 </head>
-<body>
-    <div class="container">
-        <h1>📈 美股與美國總經實時情報站</h1>
+<body class="bg-slate-50 text-slate-800 font-sans min-h-screen p-4 md:p-8">
 
-        <!-- 1. 美股即時走勢圖區塊 -->
-        <div class="card">
-            <h2>📈 美股即時走勢 (新手熱門標的導覽)</h2>
-            
-            <!-- 新手專用熱門標的分錄指南 -->
-            <div class="category-group">
-                <div class="category-title">🤖 晶片與 AI 算力：</div>
-                <button class="chip-btn" onclick="quickSelect('NVDA')">輝達 NVDA (AI霸主)</button>
-                <button class="chip-btn" onclick="quickSelect('TSM')">台積電 TSM (晶片代工)</button>
-                <button class="chip-btn" onclick="quickSelect('AMD')">超微 AMD (CPU/GPU)</button>
-                <button class="chip-btn" onclick="quickSelect('AVGO')">博通 AVGO (網通晶片)</button>
+    <div class="max-w-6xl mx-auto space-y-6">
+        
+        <!-- 頂部標題 -->
+        <header class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-6 rounded-2xl shadow-lg">
+            <h1 class="text-2xl md:text-3xl font-bold">🇺🇸 美國股市全板塊新手導覽</h1>
+            <p class="text-blue-100 mt-2 text-sm md:text-base">專為大眾與新手打造的美股市場地圖，涵蓋各大核心板塊所有可以買到的主流標的，點擊即可查看即時歷史走勢！</p>
+        </header>
+
+        <!-- 熱門焦點專區 -->
+        <section class="bg-white p-5 rounded-2xl shadow-sm border border-orange-100">
+            <h2 class="text-lg font-bold text-orange-600 mb-3 flex items-center gap-2">
+                🔥 市場高度關注熱門巨頭 (Magnificent 7 & Popular)
+            </h2>
+            <div id="hot-stocks" class="flex flex-wrap gap-2"></div>
+        </section>
+
+        <!-- 各大板塊詳細分類專區 -->
+        <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 space-y-8">
+            <h2 class="text-xl font-bold text-slate-700 border-b pb-3">🏭 美國股市九大核心板塊全覽</h2>
+            <div id="sectors-container" class="space-y-8">
+                <!-- 動態載入各板塊與完整股票 -->
             </div>
+        </section>
 
-            <div class="category-group">
-                <div class="category-title">💻 科技七巨頭 (Mag 7)：</div>
-                <button class="chip-btn" onclick="quickSelect('AAPL')">蘋果 AAPL (iPhone)</button>
-                <button class="chip-btn" onclick="quickSelect('MSFT')">微軟 MSFT (雲端/OpenAI)</button>
-                <button class="chip-btn" onclick="quickSelect('GOOGL')">谷歌 GOOGL (搜尋/YouTube)</button>
-                <button class="chip-btn" onclick="quickSelect('AMZN')">亞馬遜 AMZN (電商/AWS)</button>
-                <button class="chip-btn" onclick="quickSelect('META')">Meta (FB/IG/元宇宙)</button>
+        <!-- 互動圖表與數據展示區 -->
+        <section class="bg-white p-6 rounded-2xl shadow-md border border-slate-100 sticky bottom-4">
+            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-2">
+                <div>
+                    <h2 id="chart-title" class="text-xl font-bold text-blue-600">請選擇上方股票查看走勢</h2>
+                    <p class="text-xs text-slate-400">最近 30 個交易日收盤價走勢圖</p>
+                </div>
+                <div id="loading" class="text-sm text-amber-500 font-medium hidden">⏳ 正在從伺服器載入數據...</div>
             </div>
-
-            <div class="category-group">
-                <div class="category-title">🚗 特斯拉與消費消費品牌：</div>
-                <button class="chip-btn" onclick="quickSelect('TSLA')">特斯拉 TSLA (電動車/Robotaxi)</button>
-                <button class="chip-btn" onclick="quickSelect('NKE')">耐吉 NKE (運動品牌)</button>
-                <button class="chip-btn" onclick="quickSelect('SBUX')">星巴克 SBUX (連鎖咖啡)</button>
-                <button class="chip-btn" onclick="quickSelect('DIS')">迪士尼 DIS (娛樂/主題樂園)</button>
+            <div class="relative h-64 md:h-72 w-full">
+                <canvas id="stockChart"></canvas>
             </div>
+        </section>
 
-            <div class="search-box" style="margin-top: 15px;">
-                <input type="text" id="symbolInput" value="NVDA" placeholder="手動輸入股票代號 (如: AAPL)">
-                <button onclick="searchStock()">查詢該股行情</button>
-            </div>
-
-            <div id="stockLoading" class="loading">數據調閱中...</div>
-            <canvas id="stockChart" style="max-height: 400px; display: none;"></canvas>
-        </div>
-
-        <!-- 2. 美國總經指標區塊 -->
-        <div class="card">
-            <h2>🏛️ 美國總體經濟指標 (FRED 官方歷史數據)</h2>
-            <div class="search-box">
-                <button onclick="fetchMacro('CPI')">CPI 通膨指數</button>
-                <button onclick="fetchMacro('PCE')">PCE 物價指數</button>
-                <button onclick="fetchMacro('GDP')">GDP 經濟成長</button>
-                <button onclick="fetchMacro('NFP')">NFP 非農就業</button>
-            </div>
-            <h3 id="macroTitle">CPI 消費者物價指數</h3>
-            <div id="macroLoading" class="loading">數據調閱中...</div>
-            <div id="macroTableContainer"></div>
-        </div>
-
-        <!-- 3. 聯準會與總經新聞區塊 -->
-        <div class="card">
-            <h2>📰 國際聯準會與總經焦點新聞</h2>
-            <div id="newsLoading" class="loading">新聞載入中...</div>
-            <div id="newsContainer"></div>
-        </div>
     </div>
 
     <script>
-        const API_BASE = "https://my-stock-api.onrender.com";
-        let chartInstance = null;
+        // ⚠️ 請務必將此處替換為你的 Render 後端網址
+        const API_BASE = "https://你的後端名稱.onrender.com"; 
 
-        window.onload = function() {
-            searchStock();
-            fetchMacro('CPI');
-            fetchNews();
-        };
+        // 完整美股板塊與可買到的主流股票資料庫
+        const sectorsData = [
+            {
+                name: "💻 科技與半導體 (Technology)",
+                desc: "引領全球 AI、雲端、作業系統與硬體製造的核心科技巨頭。",
+                stocks: [
+                    { symbol: "NVDA", name: "輝達 (AI 晶片霸主)" },
+                    { symbol: "AAPL", name: "蘋果 (iPhone/消費電子)" },
+                    { symbol: "MSFT", name: "微軟 (雲端/Windows/AI)" },
+                    { symbol: "AMD", name: "超微 (CPU/GPU 晶片)" },
+                    { symbol: "AVGO", name: "博通 (網通與半導體)" },
+                    { symbol: "QCOM", name: "高通 (手機晶片/5G)" },
+                    { symbol: "INTC", name: "英特爾 (傳統晶片製造)" },
+                    { symbol: "ORCL", name: "甲骨文 (企業軟體/雲端)" },
+                    { symbol: "CRM", name: "賽富時 (雲端客戶關係管理)" },
+                    { symbol: "IBM", name: "國際商業機器 (企業IT服務)" }
+                ]
+            },
+            {
+                name: "🎬 通訊服務與娛樂 (Communication Services)",
+                desc: "涵蓋搜尋引擎、社群媒體、串流影音與電信娛樂。",
+                stocks: [
+                    { symbol: "GOOGL", name: "谷歌 (Google/YouTube)" },
+                    { symbol: "META", name: "Meta (Facebook/Instagram)" },
+                    { symbol: "NFLX", name: "Netflix (全球影音串流)" },
+                    { symbol: "DIS", name: "迪士尼 (娛樂/樂園/串流)" },
+                    { symbol: "NFLX", name: "網飛 (影音串流)" },
+                    { symbol: "TMUS", name: "T-Mobile (美國電信)" },
+                    { symbol: "VZ", name: "威Verizon (電信巨頭)" },
+                    { symbol: "T", name: "AT&T (美國電信)" }
+                ]
+            },
+            {
+                name: "⚡ 消費性非必需品 (Consumer Discretionary)",
+                desc: "人們在經濟充裕時會消費的商品，包含電商、電動車與名牌。",
+                stocks: [
+                    { symbol: "AMZN", name: "亞馬遜 (全球電商/AWS雲端)" },
+                    { symbol: "TSLA", name: "特斯拉 (電動車/能源)" },
+                    { symbol: "NKE", name: "耐吉 (運動鞋服飾)" },
+                    { symbol: "SBUX", name: "星巴克 (連鎖咖啡)" },
+                    { symbol: "MCD", name: "麥當勞 (全球速食)" },
+                    { symbol: "HD", name: "家得寶 (居家修繕零售)" },
+                    { symbol: "BKNG", name: "繽客控股 (線上旅遊訂房)" }
+                ]
+            },
+            {
+                name: "🛒 必需消費品 (Consumer Staples)",
+                desc: "民生必需品、食品、飲料與日常量販，抗跌性較強。",
+                stocks: [
+                    { symbol: "WMT", name: "沃爾瑪 (最大零售量販)" },
+                    { symbol: "PG", name: "寶僑 (日用品/母嬰護理)" },
+                    { symbol: "KO", name: "可口可樂 (飲料帝國)" },
+                    { symbol: "PEP", name: "百事可樂 (食品與飲料)" },
+                    { symbol: "COST", name: "好市多 (會員制倉儲量販)" },
+                    { symbol: "PM", name: "莫里斯資本 (菸草/消費)" }
+                ]
+            },
+            {
+                name: "🏥 醫療保健 (Healthcare)",
+                desc: "製藥大廠、醫療保險、生技與醫療器材，高齡化社會主力。",
+                stocks: [
+                    { symbol: "LLY", name: "禮來 (減重藥/糖尿病大廠)" },
+                    { symbol: "UNH", name: "聯合健康 (美國最大醫保)" },
+                    { symbol: "JNJ", name: "嬌生 (醫療生技/製藥)" },
+                    { symbol: "PFE", name: "輝瑞 (跨國製藥廠)" },
+                    { symbol: "MRK", name: "默沙東 (製藥與疫苗)" },
+                    { symbol: "ABBV", name: "艾伯維 (生物製藥)" },
+                    { symbol: "AMGN", name: "安進 (生物科技)" }
+                ]
+            },
+            {
+                name: "💳 金融服務 (Financials)",
+                desc: "銀行、信用卡支付、保險與資產管理公司。",
+                stocks: [
+                    { symbol: "BRK-B", name: "波克夏海瑟威 (巴菲特控股)" },
+                    { symbol: "JPM", name: "摩根大通 (全美最大銀行)" },
+                    { symbol: "V", name: "Visa (全球信用卡支付)" },
+                    { symbol: "MA", name: "萬事達卡 (支付網路)" },
+                    { symbol: "BAC", name: "美國銀行 (零售商業銀行)" },
+                    { symbol: "WFC", name: "富國銀行" },
+                    { symbol: "GS", name: "高盛集團 (投資銀行)" },
+                    { symbol: "AXP", name: "美國運通 (信用卡)" }
+                ]
+            },
+            {
+                name: "🔋 能源與原油 (Energy)",
+                desc: "石油開采、天然氣與傳統能源供應商。",
+                stocks: [
+                    { symbol: "XOM", name: "埃克森美孚 (石油巨頭)" },
+                    { symbol: "CVX", name: "雪佛龍 (綜合能源)" },
+                    { symbol: "COP", name: "康菲石油" },
+                    { symbol: "SLB", name: "斯倫貝謝 (油田服務)" }
+                ]
+            },
+            {
+                name: "🏭 工業與航太 (Industrials)",
+                desc: "重工業、軍工、鐵路運輸、物流與航空製造。",
+                stocks: [
+                    { symbol: "GE", name: "奇異集團 (航太與能源)" },
+                    { symbol: "CAT", name: "開拓重工 (工程重機械)" },
+                    { symbol: "BA", name: "波音 (航太與飛機製造)" },
+                    { symbol: "UNP", name: "聯合太平洋鐵路" },
+                    { symbol: "HON", name: "漢威聯合 (多元工業)" },
+                    { symbol: "UPS", name: "優比速 (全球物流運輸)" }
+                ]
+            },
+            {
+                name: "🏠 房地產與公用事業 (Real Estate & Utilities)",
+                desc: "收租型房地產信託(REITs)與水電瓦斯民生公用事業。",
+                stocks: [
+                    { symbol: "PLD", name: "普洛斯 (物流倉儲REITs)" },
+                    { symbol: "AMT", name: "美國塔樓 (通訊基地台REITs)" },
+                    { symbol: "NEE", name: "次紀元能源 (綠能與電力)" },
+                    { symbol: "DUK", name: "杜克能源 (公用事業)" }
+                ]
+            }
+        ];
 
-        function quickSelect(symbol) {
-            document.getElementById('symbolInput').value = symbol;
-            searchStock();
+        // 熱門精選
+        const hotSymbols = ["NVDA", "AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "BRK-B", "JPM", "WMT"];
+
+        let myChart = null;
+
+        function initPage() {
+            // 渲染熱門按鈕
+            const hotContainer = document.getElementById('hot-stocks');
+            hotSymbols.forEach(sym => {
+                const btn = createStockButton(sym, sym);
+                btn.className = "bg-orange-50 hover:bg-orange-100 text-orange-700 border border-orange-200 px-3 py-1.5 rounded-xl text-sm font-semibold transition shadow-xs";
+                hotContainer.appendChild(btn);
+            });
+
+            // 渲染各大板塊
+            const sectorsContainer = document.getElementById('sectors-container');
+            sectorsData.forEach(sector => {
+                const sectorDiv = document.createElement('div');
+                sectorDiv.className = "bg-slate-50 p-4 rounded-xl border border-slate-200";
+                sectorDiv.innerHTML = `
+                    <div class="mb-3">
+                        <h3 class="text-base font-bold text-slate-800">${sector.name}</h3>
+                        <p class="text-xs text-slate-500">${sector.desc}</p>
+                    </div>
+                    <div class="flex flex-wrap gap-2"></div>
+                `;
+                sectorsContainer.appendChild(sectorDiv);
+
+                const btnGroup = sectorDiv.querySelector('.flex');
+                sector.stocks.forEach(st => {
+                    const btn = createStockButton(st.symbol, `${st.name} (${st.symbol})`);
+                    btn.className = "bg-white hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-medium transition border border-slate-300 shadow-2xs";
+                    btnGroup.appendChild(btn);
+                });
+            });
+
+            // 預設載入輝達
+            fetchStockData('NVDA', '輝達 (AI 晶片霸主)');
         }
 
-        async function searchStock() {
-            const symbol = document.getElementById('symbolInput').value.trim().toUpperCase();
-            if (!symbol) return;
+        function createStockButton(symbol, displayName) {
+            const btn = document.createElement('button');
+            btn.innerText = displayName;
+            btn.onclick = () => fetchStockData(symbol, displayName);
+            return btn;
+        }
 
-            const loadingEl = document.getElementById('stockLoading');
-            const canvasEl = document.getElementById('stockChart');
+        async function fetchStockData(symbol, name) {
+            const loading = document.getElementById('loading');
+            const title = document.getElementById('chart-title');
+            loading.classList.remove('hidden');
+            title.innerText = `正在載入 ${name} 走勢...`;
+
+            try {
+                const response = await fetch(`${API_BASE}/api/stock?symbol=${symbol}`);
+                const data = await response.json();
+
+                if (response.ok) {
+                    title.innerText = `${name} 近 30 日股價走勢`;
+                    renderChart(data.timestamps, data.prices);
+                } else {
+                    alert(`無法取得 ${symbol} 數據: ${data.error}`);
+                    title.innerText = `無法載入 ${symbol} 數據`;
+                }
+            } catch (err) {
+                alert("連線後端伺服器失敗，請確認 Render 伺服器狀態與 API 網址是否正確！");
+                title.innerText = "連線錯誤";
+            } finally {
+                loading.classList.add('hidden');
+            }
+        }
+
+        function renderChart(labels, prices) {
+            const ctx = document.getElementById('stockChart').getContext('2d');
             
-            loadingEl.style.display = 'block';
-            canvasEl.style.display = 'none';
+            if (myChart) {
+                myChart.destroy();
+            }
 
-            try {
-                const res = await fetch(`${API_BASE}/api/stock?symbol=${symbol}`);
-                const data = await res.json();
-
-                if (data.error || !data.timestamps) {
-                    loadingEl.innerText = `無法取得 ${symbol} 的數據，請確認代號是否正確。`;
-                    return;
-                }
-
-                loadingEl.style.display = 'none';
-                canvasEl.style.display = 'block';
-
-                if (chartInstance) chartInstance.destroy();
-
-                const ctx = canvasEl.getContext('2d');
-                chartInstance = new Chart(ctx, {
-                    type: 'line',
-                    data: {
-                        labels: data.timestamps,
-                        datasets: [{
-                            label: `${symbol} 即時股價 (USD)`,
-                            data: data.prices,
-                            borderColor: '#007bff',
-                            backgroundColor: 'rgba(0, 123, 255, 0.1)',
-                            fill: true,
-                            tension: 0.1
-                        }]
-                    },
-                    options: {
-                        responsive: true,
-                        plugins: { legend: { display: true } }
+            myChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: '收盤價 (USD)',
+                        data: prices,
+                        borderColor: '#2563eb',
+                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.2
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: { legend: { display: false } },
+                    scales: {
+                        y: { grid: { color: '#f1f5f9' } },
+                        x: { grid: { display: false } }
                     }
-                });
-            } catch (err) {
-                loadingEl.innerText = "連線後端失敗，請稍後重試。";
-            }
-        }
-
-        async function fetchMacro(type) {
-            const titles = {
-                'CPI': 'CPI 消費者物價指數 (通膨指標)',
-                'PCE': 'PCE 個人消費支出物價指數',
-                'GDP': 'GDP 國內生產毛額成長率',
-                'NFP': 'NFP 非農業就業人口變化'
-            };
-            document.getElementById('macroTitle').innerText = titles[type] || type;
-
-            const loadingEl = document.getElementById('macroLoading');
-            const tableContainer = document.getElementById('macroTableContainer');
-
-            loadingEl.style.display = 'block';
-            tableContainer.innerHTML = '';
-
-            try {
-                const res = await fetch(`${API_BASE}/api/macro?indicator=${type}`);
-                const data = await res.json();
-
-                loadingEl.style.display = 'none';
-
-                if (!data || data.length === 0) {
-                    tableContainer.innerHTML = '<p>暫無數據</p>';
-                    return;
                 }
-
-                let html = '<table><thead><tr><th>日期</th><th>數據值</th></tr></thead><tbody>';
-                data.forEach(item => {
-                    html += `<tr><td>${item.date}</td><td>${item.value}</td></tr>`;
-                });
-                html += '</tbody></table>';
-                tableContainer.innerHTML = html;
-            } catch (err) {
-                loadingEl.innerText = "無法載入總經數據。";
-            }
+            });
         }
 
-        async function fetchNews() {
-            const loadingEl = document.getElementById('newsLoading');
-            const newsContainer = document.getElementById('newsContainer');
-
-            try {
-                const res = await fetch(`${API_BASE}/api/news`);
-                const data = await res.json();
-
-                loadingEl.style.display = 'none';
-
-                if (!data || data.length === 0) {
-                    newsContainer.innerHTML = '<p>暫無最新新聞</p>';
-                    return;
-                }
-
-                let html = '';
-                data.slice(0, 5).forEach(item => {
-                    html += `
-                        <div class="news-item">
-                            📌 <a href="${item.link}" target="_blank">${item.title}</a>
-                        </div>
-                    `;
-                });
-                newsContainer.innerHTML = html;
-            } catch (err) {
-                loadingEl.innerText = "無法載入新聞。";
-            }
-        }
+        window.onload = initPage;
     </script>
 </body>
 </html>
