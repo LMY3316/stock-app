@@ -3,118 +3,223 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>美股選股與總體經濟情報站</title>
+    <title>美股與總經情報站</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { font-family: "Microsoft JhengHei", Arial, sans-serif; padding: 20px; background: #f4f6f9; color: #333; }
-        .card { background: white; padding: 24px; border-radius: 12px; margin-bottom: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
-        h2 { font-size: 20px; margin-top: 0; color: #1a252f; border-bottom: 2px solid #eef2f5; padding-bottom: 10px; }
-        input, button { padding: 10px 16px; font-size: 15px; border-radius: 6px; border: 1px solid #ccc; margin-right: 8px; cursor: pointer; }
-        button { background-color: #0066cc; color: white; border: none; font-weight: bold; transition: 0.2s; }
-        button:hover { background-color: #004b99; }
-        .macro-btn { background-color: #28a745; margin-bottom: 10px; }
-        .macro-btn:hover { background-color: #1e7e34; }
-        ul { list-style-type: none; padding: 0; }
-        li { margin-bottom: 12px; padding: 8px; background: #f8f9fa; border-radius: 6px; }
-        a { color: #0066cc; text-decoration: none; font-weight: bold; }
-        a:hover { text-decoration: underline; }
+        body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; margin: 20px; background-color: #f8f9fa; color: #333; }
+        .container { max-width: 1000px; margin: 0 auto; }
+        .card { background: white; padding: 20px; border-radius: 12px; box-shadow: 0 4px 6px rgba(0,0,0,0.05); margin-bottom: 25px; }
+        h2 { border-bottom: 2px solid #007bff; padding-bottom: 8px; color: #007bff; margin-top: 0; }
+        .search-box { display: flex; gap: 10px; margin-bottom: 15px; flex-wrap: wrap; align-items: center; }
+        input[type="text"] { padding: 10px 14px; font-size: 16px; border: 1px solid #ccc; border-radius: 6px; text-transform: uppercase; width: 180px; }
+        button { padding: 8px 14px; font-size: 14px; border: none; border-radius: 6px; cursor: pointer; background-color: #007bff; color: white; transition: background-color 0.2s; }
+        button:hover { background-color: #0056b3; }
+        .category-group { margin-bottom: 12px; background: #f1f3f5; padding: 10px 12px; border-radius: 8px; }
+        .category-title { font-weight: bold; margin-bottom: 6px; color: #495057; font-size: 14px; }
+        .chip-btn { background-color: white; color: #333; border: 1px solid #ced4da; margin-right: 6px; margin-bottom: 4px; }
+        .chip-btn:hover { background-color: #007bff; color: white; border-color: #007bff; }
+        table { width: 100%; border-collapse: collapse; margin-top: 15px; }
+        th, td { border: 1px solid #dee2e6; padding: 10px; text-align: center; }
+        th { background-color: #f1f3f5; }
+        .loading { color: #6c757d; font-style: italic; }
+        .news-item { padding: 10px 0; border-bottom: 1px solid #eee; }
+        .news-item a { color: #007bff; text-decoration: none; font-weight: 500; }
+        .news-item a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
-    <div class="card">
-        <h2>📈 美股即時走勢 (5分鐘K線)</h2>
-        <p>請輸入美股代碼（例如：NVDA, AAPL, TSLA）：</p>
-        <input type="text" id="ticker" value="NVDA" placeholder="輸入股票代碼">
-        <button onclick="loadStock()">查詢股票行情</button>
-        <h3 id="priceText" style="color: #0066cc; margin-top: 15px;">載入中...</h3>
-        <canvas id="stockChart" height="90"></canvas>
+    <div class="container">
+        <h1>📈 美股與美國總經實時情報站</h1>
+
+        <!-- 1. 美股即時走勢圖區塊 -->
+        <div class="card">
+            <h2>📈 美股即時走勢 (新手熱門標的導覽)</h2>
+            
+            <!-- 新手專用熱門標的分錄指南 -->
+            <div class="category-group">
+                <div class="category-title">🤖 晶片與 AI 算力：</div>
+                <button class="chip-btn" onclick="quickSelect('NVDA')">輝達 NVDA (AI霸主)</button>
+                <button class="chip-btn" onclick="quickSelect('TSM')">台積電 TSM (晶片代工)</button>
+                <button class="chip-btn" onclick="quickSelect('AMD')">超微 AMD (CPU/GPU)</button>
+                <button class="chip-btn" onclick="quickSelect('AVGO')">博通 AVGO (網通晶片)</button>
+            </div>
+
+            <div class="category-group">
+                <div class="category-title">💻 科技七巨頭 (Mag 7)：</div>
+                <button class="chip-btn" onclick="quickSelect('AAPL')">蘋果 AAPL (iPhone)</button>
+                <button class="chip-btn" onclick="quickSelect('MSFT')">微軟 MSFT (雲端/OpenAI)</button>
+                <button class="chip-btn" onclick="quickSelect('GOOGL')">谷歌 GOOGL (搜尋/YouTube)</button>
+                <button class="chip-btn" onclick="quickSelect('AMZN')">亞馬遜 AMZN (電商/AWS)</button>
+                <button class="chip-btn" onclick="quickSelect('META')">Meta (FB/IG/元宇宙)</button>
+            </div>
+
+            <div class="category-group">
+                <div class="category-title">🚗 特斯拉與消費消費品牌：</div>
+                <button class="chip-btn" onclick="quickSelect('TSLA')">特斯拉 TSLA (電動車/Robotaxi)</button>
+                <button class="chip-btn" onclick="quickSelect('NKE')">耐吉 NKE (運動品牌)</button>
+                <button class="chip-btn" onclick="quickSelect('SBUX')">星巴克 SBUX (連鎖咖啡)</button>
+                <button class="chip-btn" onclick="quickSelect('DIS')">迪士尼 DIS (娛樂/主題樂園)</button>
+            </div>
+
+            <div class="search-box" style="margin-top: 15px;">
+                <input type="text" id="symbolInput" value="NVDA" placeholder="手動輸入股票代號 (如: AAPL)">
+                <button onclick="searchStock()">查詢該股行情</button>
+            </div>
+
+            <div id="stockLoading" class="loading">數據調閱中...</div>
+            <canvas id="stockChart" style="max-height: 400px; display: none;"></canvas>
+        </div>
+
+        <!-- 2. 美國總經指標區塊 -->
+        <div class="card">
+            <h2>🏛️ 美國總體經濟指標 (FRED 官方歷史數據)</h2>
+            <div class="search-box">
+                <button onclick="fetchMacro('CPI')">CPI 通膨指數</button>
+                <button onclick="fetchMacro('PCE')">PCE 物價指數</button>
+                <button onclick="fetchMacro('GDP')">GDP 經濟成長</button>
+                <button onclick="fetchMacro('NFP')">NFP 非農就業</button>
+            </div>
+            <h3 id="macroTitle">CPI 消費者物價指數</h3>
+            <div id="macroLoading" class="loading">數據調閱中...</div>
+            <div id="macroTableContainer"></div>
+        </div>
+
+        <!-- 3. 聯準會與總經新聞區塊 -->
+        <div class="card">
+            <h2>📰 國際聯準會與總經焦點新聞</h2>
+            <div id="newsLoading" class="loading">新聞載入中...</div>
+            <div id="newsContainer"></div>
+        </div>
     </div>
 
-    <div class="card">
-        <h2>📊 美國總體經濟指標 (FRED 官方歷史數據)</h2>
-        <p>點擊下方按鈕切換檢視指標：</p>
-        <button class="macro-btn" onclick="loadMacro('CPIAUCSL', 'CPI 消費者物價指數 (通膨指標)')">CPI 通膨指數</button>
-        <button class="macro-btn" onclick="loadMacro('PCE', 'PCE 個人消費支出價格指數')">PCE 物價指數</button>
-        <button class="macro-btn" onclick="loadMacro('GDP', 'GDP 國內生產毛額')">GDP 經濟成長</button>
-        <button class="macro-btn" onclick="loadMacro('PAYEMS', 'NFP 非農業就業人數')">NFP 非農就業</button>
-        <h3 id="macroTitle" style="color: #28a745; margin-top: 15px;">請選擇上方指標</h3>
-        <canvas id="macroChart" height="90"></canvas>
-    </div>
+    <script>
+        const API_BASE = "https://my-stock-api.onrender.com";
+        let chartInstance = null;
 
-    <div class="card">
-        <h2>📰 國際聯準會與總經焦點新聞</h2>
-        <ul id="news">新聞載入中，請稍候...</ul>
-    </div>
+        window.onload = function() {
+            searchStock();
+            fetchMacro('CPI');
+            fetchNews();
+        };
 
-<script>
-// 注意：等 Render 部署完成後，請把下方引號內的網址換成你在 Render 拿到的網址
-const API_BASE_URL = "https://my-stock-api-ebkr.onrender.com";
+        function quickSelect(symbol) {
+            document.getElementById('symbolInput').value = symbol;
+            searchStock();
+        }
 
-let stockChartObj = null;
-let macroChartObj = null;
+        async function searchStock() {
+            const symbol = document.getElementById('symbolInput').value.trim().toUpperCase();
+            if (!symbol) return;
 
-async function loadStock() {
-    const symbol = document.getElementById('ticker').value;
-    document.getElementById('priceText').innerText = "數據調閱中...";
-    try {
-        const res = await fetch(`${API_BASE_URL}/api/stock/${symbol}`);
-        const data = await res.json();
-        if(data.status === 'success') {
-            document.getElementById('priceText').innerText = `${data.symbol} 最新價格：$${data.price} 美元`;
-            const ctx = document.getElementById('stockChart').getContext('2d');
-            if(stockChartObj) stockChartObj.destroy();
-            stockChartObj = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: data.chart.map(x => x.time),
-                    datasets: [{ label: '股價 ($)', data: data.chart.map(x => x.price), borderColor: '#0066cc', fill: false }]
+            const loadingEl = document.getElementById('stockLoading');
+            const canvasEl = document.getElementById('stockChart');
+            
+            loadingEl.style.display = 'block';
+            canvasEl.style.display = 'none';
+
+            try {
+                const res = await fetch(`${API_BASE}/api/stock?symbol=${symbol}`);
+                const data = await res.json();
+
+                if (data.error || !data.timestamps) {
+                    loadingEl.innerText = `無法取得 ${symbol} 的數據，請確認代號是否正確。`;
+                    return;
                 }
-            });
-        } else {
-            document.getElementById('priceText').innerText = "查詢失敗，請確認代碼是否正確。";
-        }
-    } catch(e) {
-        document.getElementById('priceText').innerText = "無法連線至伺服器，請確認後端網址是否正確。";
-    }
-}
 
-async function loadMacro(seriesId, title) {
-    document.getElementById('macroTitle').innerText = title;
-    try {
-        const res = await fetch(`${API_BASE_URL}/api/macro/${seriesId}`);
-        const data = await res.json();
-        if(data.status === 'success') {
-            const ctx = document.getElementById('macroChart').getContext('2d');
-            if(macroChartObj) macroChartObj.destroy();
-            macroChartObj = new Chart(ctx, {
-                type: 'bar',
-                data: {
-                    labels: data.data.map(x => x.date),
-                    datasets: [{ label: title, data: data.data.map(x => x.value), backgroundColor: '#28a745' }]
+                loadingEl.style.display = 'none';
+                canvasEl.style.display = 'block';
+
+                if (chartInstance) chartInstance.destroy();
+
+                const ctx = canvasEl.getContext('2d');
+                chartInstance = new Chart(ctx, {
+                    type: 'line',
+                    data: {
+                        labels: data.timestamps,
+                        datasets: [{
+                            label: `${symbol} 即時股價 (USD)`,
+                            data: data.prices,
+                            borderColor: '#007bff',
+                            backgroundColor: 'rgba(0, 123, 255, 0.1)',
+                            fill: true,
+                            tension: 0.1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        plugins: { legend: { display: true } }
+                    }
+                });
+            } catch (err) {
+                loadingEl.innerText = "連線後端失敗，請稍後重試。";
+            }
+        }
+
+        async function fetchMacro(type) {
+            const titles = {
+                'CPI': 'CPI 消費者物價指數 (通膨指標)',
+                'PCE': 'PCE 個人消費支出物價指數',
+                'GDP': 'GDP 國內生產毛額成長率',
+                'NFP': 'NFP 非農業就業人口變化'
+            };
+            document.getElementById('macroTitle').innerText = titles[type] || type;
+
+            const loadingEl = document.getElementById('macroLoading');
+            const tableContainer = document.getElementById('macroTableContainer');
+
+            loadingEl.style.display = 'block';
+            tableContainer.innerHTML = '';
+
+            try {
+                const res = await fetch(`${API_BASE}/api/macro?indicator=${type}`);
+                const data = await res.json();
+
+                loadingEl.style.display = 'none';
+
+                if (!data || data.length === 0) {
+                    tableContainer.innerHTML = '<p>暫無數據</p>';
+                    return;
                 }
-            });
-        }
-    } catch(e) {
-        document.getElementById('macroTitle').innerText = "總經數據載入失敗";
-    }
-}
 
-async function loadNews() {
-    try {
-        const res = await fetch(`${API_BASE_URL}/api/news`);
-        const data = await res.json();
-        if(data.status === 'success') {
-            const list = document.getElementById('news');
-            list.innerHTML = data.news.map(n => `<li>📌 <a href="${n.link}" target="_blank">${n.title}</a></li>`).join('');
+                let html = '<table><thead><tr><th>日期</th><th>數據值</th></tr></thead><tbody>';
+                data.forEach(item => {
+                    html += `<tr><td>${item.date}</td><td>${item.value}</td></tr>`;
+                });
+                html += '</tbody></table>';
+                tableContainer.innerHTML = html;
+            } catch (err) {
+                loadingEl.innerText = "無法載入總經數據。";
+            }
         }
-    } catch(e) {
-        document.getElementById('news').innerHTML = "<li>新聞載入失敗</li>";
-    }
-}
 
-loadStock();
-loadNews();
-loadMacro('CPIAUCSL', 'CPI 消費者物價指數 (通膨指標)');
-</script>
+        async function fetchNews() {
+            const loadingEl = document.getElementById('newsLoading');
+            const newsContainer = document.getElementById('newsContainer');
+
+            try {
+                const res = await fetch(`${API_BASE}/api/news`);
+                const data = await res.json();
+
+                loadingEl.style.display = 'none';
+
+                if (!data || data.length === 0) {
+                    newsContainer.innerHTML = '<p>暫無最新新聞</p>';
+                    return;
+                }
+
+                let html = '';
+                data.slice(0, 5).forEach(item => {
+                    html += `
+                        <div class="news-item">
+                            📌 <a href="${item.link}" target="_blank">${item.title}</a>
+                        </div>
+                    `;
+                });
+                newsContainer.innerHTML = html;
+            } catch (err) {
+                loadingEl.innerText = "無法載入新聞。";
+            }
+        }
+    </script>
 </body>
 </html>
