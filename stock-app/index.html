@@ -3,10 +3,9 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>美股新手村 - 全板塊股票導覽與走勢</title>
-    <!-- Tailwind CSS & Chart.js -->
+    <title>美股新手村 - 全板塊股票分類導覽</title>
+    <!-- Tailwind CSS -->
     <script src="https://cdn.jsdelivr.net/npm/@tailwindcss/browser@4"></script>
-    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
 </head>
 <body class="bg-slate-50 text-slate-800 font-sans min-h-screen p-4 md:p-8">
 
@@ -14,47 +13,22 @@
         
         <!-- 頂部標題 -->
         <header class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-6 rounded-2xl shadow-lg">
-            <h1 class="text-2xl md:text-3xl font-bold">🇺🇸 美國股市全板塊新手導覽</h1>
-            <p class="text-blue-100 mt-2 text-sm md:text-base">專為大眾與新手打造的美股市場地圖，涵蓋各大核心板塊所有可以買到的主流標的，點擊即可查看即時歷史走勢！</p>
+            <h1 class="text-2xl md:text-3xl font-bold">🇺🇸 美國股市全板塊與標的地圖</h1>
+            <p class="text-blue-100 mt-2 text-sm md:text-base">專為投資新手打造的完整分類清單，清楚呈現各大核心板塊所有可以買到的主流公司與代號！</p>
         </header>
-
-        <!-- 熱門焦點專區 -->
-        <section class="bg-white p-5 rounded-2xl shadow-sm border border-orange-100">
-            <h2 class="text-lg font-bold text-orange-600 mb-3 flex items-center gap-2">
-                🔥 市場高度關注熱門巨頭 (Magnificent 7 & Popular)
-            </h2>
-            <div id="hot-stocks" class="flex flex-wrap gap-2"></div>
-        </section>
 
         <!-- 各大板塊詳細分類專區 -->
         <section class="bg-white p-6 rounded-2xl shadow-sm border border-slate-100 space-y-8">
-            <h2 class="text-xl font-bold text-slate-700 border-b pb-3">🏭 美國股市九大核心板塊全覽</h2>
+            <h2 class="text-xl font-bold text-slate-700 border-b pb-3">🏭 美國股市核心板塊與完整分類清單</h2>
             <div id="sectors-container" class="space-y-8">
-                <!-- 動態載入各板塊與完整股票 -->
-            </div>
-        </section>
-
-        <!-- 互動圖表與數據展示區 -->
-        <section class="bg-white p-6 rounded-2xl shadow-md border border-slate-100 sticky bottom-4">
-            <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-4 gap-2">
-                <div>
-                    <h2 id="chart-title" class="text-xl font-bold text-blue-600">請選擇上方股票查看走勢</h2>
-                    <p class="text-xs text-slate-400">最近 30 個交易日收盤價走勢圖</p>
-                </div>
-                <div id="loading" class="text-sm text-amber-500 font-medium hidden">⏳ 正在從伺服器載入數據...</div>
-            </div>
-            <div class="relative h-64 md:h-72 w-full">
-                <canvas id="stockChart"></canvas>
+                <!-- 動態載入各大板塊與股票 -->
             </div>
         </section>
 
     </div>
 
     <script>
-        // ⚠️ 請務必將此處替換為你的 Render 後端網址
-        const API_BASE = "https://你的後端名稱.onrender.com"; 
-
-        // 完整美股板塊與可買到的主流股票資料庫
+        // 完整的板塊與可買到的主流美股資料庫（包含 BE 與電力、能源等）
         const sectorsData = [
             {
                 name: "💻 科技與半導體 (Technology)",
@@ -68,8 +42,29 @@
                     { symbol: "QCOM", name: "高通 (手機晶片/5G)" },
                     { symbol: "INTC", name: "英特爾 (傳統晶片製造)" },
                     { symbol: "ORCL", name: "甲骨文 (企業軟體/雲端)" },
-                    { symbol: "CRM", name: "賽富時 (雲端客戶關係管理)" },
+                    { symbol: "CRM", name: "賽富時 (雲端客戶關係)" },
                     { symbol: "IBM", name: "國際商業機器 (企業IT服務)" }
+                ]
+            },
+            {
+                name: "⚡ 電力與公用事業 (Utilities)",
+                desc: "專門負責發電、輸電、民生用電、核能與再生能源供應商。",
+                stocks: [
+                    { symbol: "NEE", name: "次紀元能源 (美國最大綠能/電力)" },
+                    { symbol: "DUK", name: "杜克能源 (大型電力供應商)" },
+                    { symbol: "SO", name: "南方公司 (傳統與核能發電)" },
+                    { symbol: "CEG", name: "星座能源 (美國最大核能發電)" },
+                    { symbol: "BE", name: "布盧姆能源 (氫能與燃料電池發電)" }
+                ]
+            },
+            {
+                name: "🛢️ 傳統化石能源 (Energy)",
+                desc: "石油勘探、開采、精煉與傳統化石燃料供應商。",
+                stocks: [
+                    { symbol: "XOM", name: "埃克森美孚 (石油巨頭)" },
+                    { symbol: "CVX", name: "雪佛龍 (綜合能源)" },
+                    { symbol: "COP", name: "康菲石油" },
+                    { symbol: "SLB", name: "斯倫貝謝 (油田服務)" }
                 ]
             },
             {
@@ -80,7 +75,6 @@
                     { symbol: "META", name: "Meta (Facebook/Instagram)" },
                     { symbol: "NFLX", name: "Netflix (全球影音串流)" },
                     { symbol: "DIS", name: "迪士尼 (娛樂/樂園/串流)" },
-                    { symbol: "NFLX", name: "網飛 (影音串流)" },
                     { symbol: "TMUS", name: "T-Mobile (美國電信)" },
                     { symbol: "VZ", name: "威Verizon (電信巨頭)" },
                     { symbol: "T", name: "AT&T (美國電信)" }
@@ -139,16 +133,6 @@
                 ]
             },
             {
-                name: "🔋 能源與原油 (Energy)",
-                desc: "石油開采、天然氣與傳統能源供應商。",
-                stocks: [
-                    { symbol: "XOM", name: "埃克森美孚 (石油巨頭)" },
-                    { symbol: "CVX", name: "雪佛龍 (綜合能源)" },
-                    { symbol: "COP", name: "康菲石油" },
-                    { symbol: "SLB", name: "斯倫貝謝 (油田服務)" }
-                ]
-            },
-            {
                 name: "🏭 工業與航太 (Industrials)",
                 desc: "重工業、軍工、鐵路運輸、物流與航空製造。",
                 stocks: [
@@ -159,121 +143,33 @@
                     { symbol: "HON", name: "漢威聯合 (多元工業)" },
                     { symbol: "UPS", name: "優比速 (全球物流運輸)" }
                 ]
-            },
-            {
-                name: "🏠 房地產與公用事業 (Real Estate & Utilities)",
-                desc: "收租型房地產信託(REITs)與水電瓦斯民生公用事業。",
-                stocks: [
-                    { symbol: "PLD", name: "普洛斯 (物流倉儲REITs)" },
-                    { symbol: "AMT", name: "美國塔樓 (通訊基地台REITs)" },
-                    { symbol: "NEE", name: "次紀元能源 (綠能與電力)" },
-                    { symbol: "DUK", name: "杜克能源 (公用事業)" }
-                ]
             }
         ];
 
-        // 熱門精選
-        const hotSymbols = ["NVDA", "AAPL", "MSFT", "GOOGL", "AMZN", "META", "TSLA", "BRK-B", "JPM", "WMT"];
-
-        let myChart = null;
-
         function initPage() {
-            // 渲染熱門按鈕
-            const hotContainer = document.getElementById('hot-stocks');
-            hotSymbols.forEach(sym => {
-                const btn = createStockButton(sym, sym);
-                btn.className = "bg-orange-50 hover:bg-orange-100 text-orange-700 border border-orange-200 px-3 py-1.5 rounded-xl text-sm font-semibold transition shadow-xs";
-                hotContainer.appendChild(btn);
-            });
-
-            // 渲染各大板塊
             const sectorsContainer = document.getElementById('sectors-container');
+            
             sectorsData.forEach(sector => {
                 const sectorDiv = document.createElement('div');
-                sectorDiv.className = "bg-slate-50 p-4 rounded-xl border border-slate-200";
+                sectorDiv.className = "bg-slate-50 p-5 rounded-xl border border-slate-200 shadow-2xs";
+                
+                let stocksHtml = sector.stocks.map(st => `
+                    <div class="bg-white border border-slate-300 px-3 py-2 rounded-lg shadow-2xs flex flex-col">
+                        <span class="font-bold text-blue-600 text-sm">${st.symbol}</span>
+                        <span class="text-xs text-slate-600">${st.name}</span>
+                    </div>
+                `).join('');
+
                 sectorDiv.innerHTML = `
                     <div class="mb-3">
-                        <h3 class="text-base font-bold text-slate-800">${sector.name}</h3>
-                        <p class="text-xs text-slate-500">${sector.desc}</p>
+                        <h3 class="text-lg font-bold text-slate-800">${sector.name}</h3>
+                        <p class="text-xs text-slate-500 mt-0.5">${sector.desc}</p>
                     </div>
-                    <div class="flex flex-wrap gap-2"></div>
+                    <div class="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-3">
+                        ${stocksHtml}
+                    </div>
                 `;
                 sectorsContainer.appendChild(sectorDiv);
-
-                const btnGroup = sectorDiv.querySelector('.flex');
-                sector.stocks.forEach(st => {
-                    const btn = createStockButton(st.symbol, `${st.name} (${st.symbol})`);
-                    btn.className = "bg-white hover:bg-blue-50 hover:text-blue-600 hover:border-blue-300 text-slate-700 px-3 py-1.5 rounded-lg text-xs font-medium transition border border-slate-300 shadow-2xs";
-                    btnGroup.appendChild(btn);
-                });
-            });
-
-            // 預設載入輝達
-            fetchStockData('NVDA', '輝達 (AI 晶片霸主)');
-        }
-
-        function createStockButton(symbol, displayName) {
-            const btn = document.createElement('button');
-            btn.innerText = displayName;
-            btn.onclick = () => fetchStockData(symbol, displayName);
-            return btn;
-        }
-
-        async function fetchStockData(symbol, name) {
-            const loading = document.getElementById('loading');
-            const title = document.getElementById('chart-title');
-            loading.classList.remove('hidden');
-            title.innerText = `正在載入 ${name} 走勢...`;
-
-            try {
-                const response = await fetch(`${API_BASE}/api/stock?symbol=${symbol}`);
-                const data = await response.json();
-
-                if (response.ok) {
-                    title.innerText = `${name} 近 30 日股價走勢`;
-                    renderChart(data.timestamps, data.prices);
-                } else {
-                    alert(`無法取得 ${symbol} 數據: ${data.error}`);
-                    title.innerText = `無法載入 ${symbol} 數據`;
-                }
-            } catch (err) {
-                alert("連線後端伺服器失敗，請確認 Render 伺服器狀態與 API 網址是否正確！");
-                title.innerText = "連線錯誤";
-            } finally {
-                loading.classList.add('hidden');
-            }
-        }
-
-        function renderChart(labels, prices) {
-            const ctx = document.getElementById('stockChart').getContext('2d');
-            
-            if (myChart) {
-                myChart.destroy();
-            }
-
-            myChart = new Chart(ctx, {
-                type: 'line',
-                data: {
-                    labels: labels,
-                    datasets: [{
-                        label: '收盤價 (USD)',
-                        data: prices,
-                        borderColor: '#2563eb',
-                        backgroundColor: 'rgba(37, 99, 235, 0.1)',
-                        borderWidth: 2,
-                        fill: true,
-                        tension: 0.2
-                    }]
-                },
-                options: {
-                    responsive: true,
-                    maintainAspectRatio: false,
-                    plugins: { legend: { display: false } },
-                    scales: {
-                        y: { grid: { color: '#f1f5f9' } },
-                        x: { grid: { display: false } }
-                    }
-                }
             });
         }
 
