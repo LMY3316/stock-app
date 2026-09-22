@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <title>美股選股與總經情報站</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        body { font-family: sans-serif; padding: 20px; background: #f0f2f5; }
+        .card { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
+        input, button { padding: 8px 12px; font-size: 16px; margin-right: 8px; cursor: pointer; }
+        ul { list-style-type: none; padding: 0; }
+        li { margin-bottom: 12px; }
+        a { color: #0066cc; text-decoration: none; font-weight: bold; }
+        a:hover { text-decoration: underline; }
+    </style>
+</head>
+<body>
+    <div class="card">
+        <h2>📈 美股精細分時行情 (5分鐘線)</h2>
+        <input type="text" id="ticker" value="NVDA">
+        <button onclick="loadStock()">查詢股票</button>
+        <h3 id="priceText">--</h3>
+        <canvas id="stockChart" height="80"></canvas>
+    </div>
+
+    <div class="card">
+        <h2>📊 美國總體經濟指標 (FRED 官方數據)</h2>
+        <button onclick="loadMacro('CPIAUCSL', 'CPI 消費者物價指數')">CPI</button>
+        <button onclick="loadMacro('PCE', 'PCE 個人消費支出')">PCE</button>
+        <button onclick="loadMacro('GDP', 'GDP 國內生產毛額')">GDP</button>
+        <button onclick="loadMacro('PAYEMS', 'NFP 非農就業人口')">NFP 非農</button>
+        <h3 id="macroTitle">請選擇上方指標</h3>
+        <canvas id="macroChart" height="80"></canvas>
+    </div>
+
+    <div class="card">
+        <h2>📰 國際重大新聞 (點擊查看國外原文連結)</h2>
+        <ul id="news">載入中...</ul>
+    </div>
+
+<script>
+// 注意：稍後部署完後端後，我們會回來把這裡替換成真實的網址
+const API_BASE_URL = "https://你的Render後端網址.onrender.com";
+
+let stockChartObj = null;
+let macroChartObj = null;
+
+async function loadStock() {
+    const symbol = document.getElementById('ticker').value;
+    const res = await fetch(`${API_BASE_URL}/api/stock/${symbol}`);
+    const data = await res.json();
+    if(data.status === 'success') {
+        document.getElementById('priceText').innerText = `${data.symbol} 當前價格: $${data.price}`;
+        const ctx = document.getElementById('stockChart').getContext('2d');
+        if(stockChartObj) stockChartObj.destroy();
+        stockChartObj = new Chart(ctx, {
+            type: 'line',
+            data: {
+                labels: data.chart.map(x => x.time),
+                datasets: [{ label: '分時價格 ($)', data: data.chart.map(x => x.price), borderColor: '#0066cc', fill: false }]
+            }
+        });
+    }
+}
+
+async function loadMacro(seriesId, title) {
+    document.getElementById('macroTitle').innerText = title;
+    const res = await fetch(`${API_BASE_URL}/api/macro/${seriesId}`);
+    const data = await res.json();
+    if(data.status === 'success') {
+        const ctx = document.getElementById('macroChart').getContext('2d');
+        if(macroChartObj) macroChartObj.destroy();
+        macroChartObj = new Chart(ctx, {
+            type: 'bar',
+            data: {
+                labels: data.data.map(x => x.date),
+                datasets: [{ label: title, data: data.data.map(x => x.value), backgroundColor: '#28a745' }]
+            }
+        });
+    }
+}
+
+async function loadNews() {
+    const res = await fetch(`${API_BASE_URL}/api/news`);
+    const data = await res.json();
+    if(data.status === 'success') {
+        const list = document.getElementById('news');
+        list.innerHTML = data.news.map(n => `<li>🔗 <a href="${n.link}" target="_blank">${n.title}</a></li>`).join('');
+    }
+}
+
+loadStock();
+loadNews();
+loadMacro('CPIAUCSL', 'CPI 消費者物價指數');
+</script>
+</body>
+</html>
