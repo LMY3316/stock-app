@@ -2,44 +2,52 @@
 <html lang="zh-TW">
 <head>
     <meta charset="UTF-8">
-    <title>美股選股與總經情報站</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>美股選股與總體經濟情報站</title>
     <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
     <style>
-        body { font-family: sans-serif; padding: 20px; background: #f0f2f5; }
-        .card { background: white; padding: 20px; border-radius: 8px; margin-bottom: 20px; box-shadow: 0 2px 5px rgba(0,0,0,0.05); }
-        input, button { padding: 8px 12px; font-size: 16px; margin-right: 8px; cursor: pointer; }
+        body { font-family: "Microsoft JhengHei", Arial, sans-serif; padding: 20px; background: #f4f6f9; color: #333; }
+        .card { background: white; padding: 24px; border-radius: 12px; margin-bottom: 24px; box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        h2 { font-size: 20px; margin-top: 0; color: #1a252f; border-bottom: 2px solid #eef2f5; padding-bottom: 10px; }
+        input, button { padding: 10px 16px; font-size: 15px; border-radius: 6px; border: 1px solid #ccc; margin-right: 8px; cursor: pointer; }
+        button { background-color: #0066cc; color: white; border: none; font-weight: bold; transition: 0.2s; }
+        button:hover { background-color: #004b99; }
+        .macro-btn { background-color: #28a745; margin-bottom: 10px; }
+        .macro-btn:hover { background-color: #1e7e34; }
         ul { list-style-type: none; padding: 0; }
-        li { margin-bottom: 12px; }
+        li { margin-bottom: 12px; padding: 8px; background: #f8f9fa; border-radius: 6px; }
         a { color: #0066cc; text-decoration: none; font-weight: bold; }
         a:hover { text-decoration: underline; }
     </style>
 </head>
 <body>
     <div class="card">
-        <h2>📈 美股精細分時行情 (5分鐘線)</h2>
-        <input type="text" id="ticker" value="NVDA">
-        <button onclick="loadStock()">查詢股票</button>
-        <h3 id="priceText">--</h3>
-        <canvas id="stockChart" height="80"></canvas>
+        <h2>📈 美股即時走勢 (5分鐘K線)</h2>
+        <p>請輸入美股代碼（例如：NVDA, AAPL, TSLA）：</p>
+        <input type="text" id="ticker" value="NVDA" placeholder="輸入股票代碼">
+        <button onclick="loadStock()">查詢股票行情</button>
+        <h3 id="priceText" style="color: #0066cc; margin-top: 15px;">載入中...</h3>
+        <canvas id="stockChart" height="90"></canvas>
     </div>
 
     <div class="card">
-        <h2>📊 美國總體經濟指標 (FRED 官方數據)</h2>
-        <button onclick="loadMacro('CPIAUCSL', 'CPI 消費者物價指數')">CPI</button>
-        <button onclick="loadMacro('PCE', 'PCE 個人消費支出')">PCE</button>
-        <button onclick="loadMacro('GDP', 'GDP 國內生產毛額')">GDP</button>
-        <button onclick="loadMacro('PAYEMS', 'NFP 非農就業人口')">NFP 非農</button>
-        <h3 id="macroTitle">請選擇上方指標</h3>
-        <canvas id="macroChart" height="80"></canvas>
+        <h2>📊 美國總體經濟指標 (FRED 官方歷史數據)</h2>
+        <p>點擊下方按鈕切換檢視指標：</p>
+        <button class="macro-btn" onclick="loadMacro('CPIAUCSL', 'CPI 消費者物價指數 (通膨指標)')">CPI 通膨指數</button>
+        <button class="macro-btn" onclick="loadMacro('PCE', 'PCE 個人消費支出價格指數')">PCE 物價指數</button>
+        <button class="macro-btn" onclick="loadMacro('GDP', 'GDP 國內生產毛額')">GDP 經濟成長</button>
+        <button class="macro-btn" onclick="loadMacro('PAYEMS', 'NFP 非農業就業人數')">NFP 非農就業</button>
+        <h3 id="macroTitle" style="color: #28a745; margin-top: 15px;">請選擇上方指標</h3>
+        <canvas id="macroChart" height="90"></canvas>
     </div>
 
     <div class="card">
-        <h2>📰 國際重大新聞 (點擊查看國外原文連結)</h2>
-        <ul id="news">載入中...</ul>
+        <h2>📰 國際聯準會與總經焦點新聞</h2>
+        <ul id="news">新聞載入中，請稍候...</ul>
     </div>
 
 <script>
-// 注意：稍後部署完後端後，我們會回來把這裡替換成真實的網址
+// 注意：等 Render 部署完成後，請把下方引號內的網址換成你在 Render 拿到的網址
 const API_BASE_URL = "https://你的Render後端網址.onrender.com";
 
 let stockChartObj = null;
@@ -47,51 +55,66 @@ let macroChartObj = null;
 
 async function loadStock() {
     const symbol = document.getElementById('ticker').value;
-    const res = await fetch(`${API_BASE_URL}/api/stock/${symbol}`);
-    const data = await res.json();
-    if(data.status === 'success') {
-        document.getElementById('priceText').innerText = `${data.symbol} 當前價格: $${data.price}`;
-        const ctx = document.getElementById('stockChart').getContext('2d');
-        if(stockChartObj) stockChartObj.destroy();
-        stockChartObj = new Chart(ctx, {
-            type: 'line',
-            data: {
-                labels: data.chart.map(x => x.time),
-                datasets: [{ label: '分時價格 ($)', data: data.chart.map(x => x.price), borderColor: '#0066cc', fill: false }]
-            }
-        });
+    document.getElementById('priceText').innerText = "數據調閱中...";
+    try {
+        const res = await fetch(`${API_BASE_URL}/api/stock/${symbol}`);
+        const data = await res.json();
+        if(data.status === 'success') {
+            document.getElementById('priceText').innerText = `${data.symbol} 最新價格：$${data.price} 美元`;
+            const ctx = document.getElementById('stockChart').getContext('2d');
+            if(stockChartObj) stockChartObj.destroy();
+            stockChartObj = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.chart.map(x => x.time),
+                    datasets: [{ label: '股價 ($)', data: data.chart.map(x => x.price), borderColor: '#0066cc', fill: false }]
+                }
+            });
+        } else {
+            document.getElementById('priceText').innerText = "查詢失敗，請確認代碼是否正確。";
+        }
+    } catch(e) {
+        document.getElementById('priceText').innerText = "無法連線至伺服器，請確認後端網址是否正確。";
     }
 }
 
 async function loadMacro(seriesId, title) {
     document.getElementById('macroTitle').innerText = title;
-    const res = await fetch(`${API_BASE_URL}/api/macro/${seriesId}`);
-    const data = await res.json();
-    if(data.status === 'success') {
-        const ctx = document.getElementById('macroChart').getContext('2d');
-        if(macroChartObj) macroChartObj.destroy();
-        macroChartObj = new Chart(ctx, {
-            type: 'bar',
-            data: {
-                labels: data.data.map(x => x.date),
-                datasets: [{ label: title, data: data.data.map(x => x.value), backgroundColor: '#28a745' }]
-            }
-        });
+    try {
+        const res = await fetch(`${API_BASE_URL}/api/macro/${seriesId}`);
+        const data = await res.json();
+        if(data.status === 'success') {
+            const ctx = document.getElementById('macroChart').getContext('2d');
+            if(macroChartObj) macroChartObj.destroy();
+            macroChartObj = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.data.map(x => x.date),
+                    datasets: [{ label: title, data: data.data.map(x => x.value), backgroundColor: '#28a745' }]
+                }
+            });
+        }
+    } catch(e) {
+        document.getElementById('macroTitle').innerText = "總經數據載入失敗";
     }
 }
 
 async function loadNews() {
-    const res = await fetch(`${API_BASE_URL}/api/news`);
-    const data = await res.json();
-    if(data.status === 'success') {
-        const list = document.getElementById('news');
-        list.innerHTML = data.news.map(n => `<li>🔗 <a href="${n.link}" target="_blank">${n.title}</a></li>`).join('');
+    try {
+        const res = await fetch(`${API_BASE_URL}/api/news`);
+        const data = await res.json();
+        if(data.status === 'success') {
+            const list = document.getElementById('news');
+            list.innerHTML = data.news.map(n => `<li>📌 <a href="${n.link}" target="_blank">${n.title}</a></li>`).join('');
+        }
+    } catch(e) {
+        document.getElementById('news').innerHTML = "<li>新聞載入失敗</li>";
     }
 }
 
 loadStock();
 loadNews();
-loadMacro('CPIAUCSL', 'CPI 消費者物價指數');
+loadMacro('CPIAUCSL', 'CPI 消費者物價指數 (通膨指標)');
 </script>
 </body>
 </html>
