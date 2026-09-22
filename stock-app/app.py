@@ -27,19 +27,16 @@ def get_stock():
         df = ticker.history(period='5d', interval='5m')
         
         # 如果休市或無分線資料，自動降級抓取近期日線
-        if df.empty:
+        if df is None or df.empty:
             df = ticker.history(period='1mo', interval='1d')
             
-        if df.empty:
+        if df is None or df.empty:
             return jsonify({"error": "No data found for symbol"}), 404
 
         # 取最近 50 筆資料避免圖表過於擁擠
         df = df.tail(50)
 
         # 格式化時間與價格
-        timestamps = [d.strftime('%m-%d %H:%M') if '5m' in str(df.index.inferred_type) else d.strftime('%Y-%m-%d') for d declared_in_index for d in df.index]
-        
-        # 修正時間格式化
         timestamps = []
         for idx in df.index:
             try:
@@ -47,7 +44,7 @@ def get_stock():
             except:
                 timestamps.append(str(idx)[:10])
 
-        prices = [round(p, 2) for p in df['Close'].tolist()]
+        prices = [round(float(p), 2) for p in df['Close'].tolist()]
 
         return jsonify({
             "symbol": symbol,
@@ -85,7 +82,7 @@ def get_macro():
         for date, val in recent_data.items():
             result.append({
                 "date": date.strftime('%Y-%m'),
-                "value": round(val, 2)
+                "value": round(float(val), 2)
             })
         
         # 最新日期排在最前
