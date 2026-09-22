@@ -7,44 +7,32 @@ import requests
 from xml.etree import ElementTree as ET
 
 app = Flask(__name__)
-CORS(app)  # 允許跨域請求
+CORS(app)
 
-# 取得 FRED API Key
 FRED_API_KEY = os.environ.get('FRED_API_KEY', '')
 
 @app.route('/')
 def home():
     return jsonify({"status": "API is running!"})
 
-# 1. 股票數據 API (含休市自動備援)
 @app.route('/api/stock')
 def get_stock():
     symbol = request.args.get('symbol', 'NVDA').upper()
     try:
-        ticker = yf.Ticker(symbol)
+        df = yf.download(tickers=symbol, period='1mo', interval='1d', progress=False)
         
-        # 先嘗試抓取 5 天內的 5 分鐘 K 線
-        df = ticker.history(period='5d', interval='5m')
-        
-        # 如果休市或無分線資料，自動降級抓取近期日線
-        if df is None or df.empty:
-            df = ticker.history(period='1mo', interval='1d')
-            
-        if df is None or df.empty:
-            return jsonify({"error": "No data found for symbol"}), 404
+        if df.empty:
+            return jsonify({"error": f"No data found for symbol {symbol}"}), 404
 
-        # 取最近 50 筆資料避免圖表過於擁擠
-        df = df.tail(50)
+        if hasattr(df.columns, 'levels'):
+            close_data = df['Close'][symbol] if symbol in df['Close'] else df['Close'].iloc[:, 0]
+        else:
+            close_data = df['Close']
 
-        # 格式化時間與價格
-        timestamps = []
-        for idx in df.index:
-            try:
-                timestamps.append(idx.strftime('%m/%d %H:%M'))
-            except:
-                timestamps.append(str(idx)[:10])
+        close_data = close_data.tail(30)
 
-        prices = [round(float(p), 2) for p in df['Close'].tolist()]
+        timestamps = [d.strftime('%Y-%m-%d') for d in close_data.index]
+        prices = [round(float(p), 2) for p in close_data.values]
 
         return jsonify({
             "symbol": symbol,
@@ -52,9 +40,9 @@ def get_stock():
             "prices": prices
         })
     except Exception as e:
+        print("Stock Error:", str(e))
         return jsonify({"error": str(e)}), 500
 
-# 2. 總經數據 API
 @app.route('/api/macro')
 def get_macro():
     indicator = request.args.get('indicator', 'CPI').upper()
@@ -75,7 +63,6 @@ def get_macro():
         fred = Fred(api_key=FRED_API_KEY)
         data = fred.get_series(series_id)
         
-        # 取最新的 12 筆歷史資料
         recent_data = data.tail(12)
         
         result = []
@@ -85,18 +72,18 @@ def get_macro():
                 "value": round(float(val), 2)
             })
         
-        # 最新日期排在最前
         result.reverse()
         return jsonify(result)
     except Exception as e:
+        print("Macro Error:", str(e))
         return jsonify({"error": str(e)}), 500
 
-# 3. 新聞 API
 @app.route('/api/news')
 def get_news():
     try:
         url = "https://news.google.com/rss/search?q=Federal+Reserve+economy+when:7d&hl=en-US&gl=US&ceid=US:en"
-        resp = requests.get(url, timeout=10)
+        headers = {'User-Agent': 'Mozilla/5.0'}
+        resp = requests.get(url, headers=headers, timeout=10)
         root = ET.fromstring(resp.content)
 
         news_items = []
@@ -109,6 +96,7 @@ def get_news():
             })
         return jsonify(news_items)
     except Exception as e:
+        print("News Error:", str(e))
         return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
