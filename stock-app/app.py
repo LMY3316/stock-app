@@ -1,52 +1,118 @@
-import os
 from flask import Flask, jsonify, request
 from flask_cors import CORS
 import yfinance as yf
 from fredapi import Fred
+import os
 import requests
-import xml.etree.ElementTree as ET
+from xml.etree import ElementTree as ET
 
 app = Flask(__name__)
-CORS(app)
+CORS(app)  # 允許跨域請求
 
-# FRED API 金鑰
-FRED_API_KEY = "f8c628f6ead461499c67471a516d1e8c"
-fred = Fred(api_key=FRED_API_KEY)
+# 取得 FRED API Key
+FRED_API_KEY = os.environ.get('FRED_API_KEY', '')
 
-# 1. 取得美股個股 5 分鐘線圖與最新價格
-@app.route('/api/stock/<ticker>')
-def get_stock(ticker):
+@app.route('/')
+def home():
+    return jsonify({"status": "API is running!"})
+
+# 1. 股票數據 API (含休市自動備援)
+@app.route('/api/stock')
+def get_stock():
+    symbol = request.args.get('symbol', 'NVDA').upper()
     try:
-        stock = yf.Ticker(ticker)
-        df = stock.history(period="1d", interval="5m")
-        chart_data = [{"time": idx.strftime('%H:%M'), "price": round(row['Close'], 2)} for idx, row in df.iterrows()]
-        current_price = stock.info.get('regularMarketPrice') or (round(df['Close'].iloc[-1], 2) if not df.empty else 0)
-        return jsonify({"status": "success", "symbol": ticker.upper(), "price": current_price, "chart": chart_data})
-    except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 400
+        ticker = yf.Ticker(symbol)
+        
+        # 先嘗試抓取 5 天內的 5 分鐘 K 線
+        df = ticker.history(period='5d', interval='5m')
+        
+        # 如果休市或無分線資料，自動降級抓取近期日線
+        if df.empty:
+            df = ticker.history(period='1mo', interval='1d')
+            
+        if df.empty:
+            return jsonify({"error": "No data found for symbol"}), 404
 
-# 2. 抓取美國總經數據 (CPI, PCE, GDP, NFP)
-@app.route('/api/macro/<series_id>')
-def get_macro(series_id):
+        # 取最近 50 筆資料避免圖表過於擁擠
+        df = df.tail(50)
+
+        # 格式化時間與價格
+        timestamps = [d.strftime('%m-%d %H:%M') if '5m' in str(df.index.inferred_type) else d.strftime('%Y-%m-%d') for d declared_in_index for d in df.index]
+        
+        # 修正時間格式化
+        timestamps = []
+        for idx in df.index:
+            try:
+                timestamps.append(idx.strftime('%m/%d %H:%M'))
+            except:
+                timestamps.append(str(idx)[:10])
+
+        prices = [round(p, 2) for p in df['Close'].tolist()]
+
+        return jsonify({
+            "symbol": symbol,
+            "timestamps": timestamps,
+            "prices": prices
+        })
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+# 2. 總經數據 API
+@app.route('/api/macro')
+def get_macro():
+    indicator = request.args.get('indicator', 'CPI').upper()
+    
+    series_map = {
+        'CPI': 'CPIAUCSL',
+        'PCE': 'PCEPI',
+        'GDP': 'GDP',
+        'NFP': 'PAYEMS'
+    }
+    
+    series_id = series_map.get(indicator, 'CPIAUCSL')
+
+    if not FRED_API_KEY:
+        return jsonify({"error": "FRED_API_KEY is missing"}), 500
+
     try:
-        data = fred.get_series(series_id).tail(12)
-        result = [{"date": idx.strftime('%Y-%m'), "value": float(val)} for idx, val in data.items()]
-        return jsonify({"status": "success", "data": result})
+        fred = Fred(api_key=FRED_API_KEY)
+        data = fred.get_series(series_id)
+        
+        # 取最新的 12 筆歷史資料
+        recent_data = data.tail(12)
+        
+        result = []
+        for date, val in recent_data.items():
+            result.append({
+                "date": date.strftime('%Y-%m'),
+                "value": round(val, 2)
+            })
+        
+        # 最新日期排在最前
+        result.reverse()
+        return jsonify(result)
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 400
+        return jsonify({"error": str(e)}), 500
 
-# 3. 抓取國外重大新聞 RSS
+# 3. 新聞 API
 @app.route('/api/news')
 def get_news():
-    url = "https://news.google.com/rss/search?q=Federal+Reserve+OR+CPI+OR+PCE+OR+GDP&hl=en-US&gl=US&ceid=US:en"
     try:
-        res = requests.get(url, timeout=5)
-        root = ET.fromstring(res.content)
-        news = [{"title": item.find('title').text, "link": item.find('link').text} for item in root.findall('.//item')[:5]]
-        return jsonify({"status": "success", "news": news})
+        url = "https://news.google.com/rss/search?q=Federal+Reserve+economy+when:7d&hl=en-US&gl=US&ceid=US:en"
+        resp = requests.get(url, timeout=10)
+        root = ET.fromstring(resp.content)
+
+        news_items = []
+        for item in root.findall('.//item')[:5]:
+            title = item.find('title').text if item.find('title') is not None else 'No Title'
+            link = item.find('link').text if item.find('link') is not None else '#'
+            news_items.append({
+                "title": title,
+                "link": link
+            })
+        return jsonify(news_items)
     except Exception as e:
-        return jsonify({"status": "error", "message": str(e)}), 400
+        return jsonify({"error": str(e)}), 500
 
 if __name__ == '__main__':
-    port = int(os.environ.get("PORT", 5000))
-    app.run(host='0.0.0.0', port=port)
+    app.run(host='0.0.0.0', port=5000)
