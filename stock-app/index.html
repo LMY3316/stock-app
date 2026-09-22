@@ -14,7 +14,7 @@
         <!-- 頂部標題 -->
         <header class="bg-gradient-to-r from-blue-600 to-indigo-700 text-white p-6 rounded-2xl shadow-lg">
             <h1 class="text-2xl md:text-3xl font-bold">🇺🇸 美國股市全板塊與標的地圖</h1>
-            <p class="text-blue-100 mt-2 text-sm md:text-base">專為投資新手打造的完整分類清單，清楚呈現各大核心板塊所有可以買到的主流公司與代號！</p>
+            <p class="text-blue-100 mt-2 text-sm md:text-base">專為投資新手打造的完整分類清單，各大核心板塊擴充精選，清楚呈現主流公司與代號！</p>
         </header>
 
         <!-- 各大板塊詳細分類專區 -->
@@ -28,7 +28,7 @@
     </div>
 
     <script>
-        // 完整的板塊與可買到的主流美股資料庫（包含 BE 與電力、能源等）
+        // 擴充後的完整板塊與主流美股資料庫（每個板塊皆額外增加 6 家公司）
         const sectorsData = [
             {
                 name: "💻 科技與半導體 (Technology)",
@@ -43,7 +43,14 @@
                     { symbol: "INTC", name: "英特爾 (傳統晶片製造)" },
                     { symbol: "ORCL", name: "甲骨文 (企業軟體/雲端)" },
                     { symbol: "CRM", name: "賽富時 (雲端客戶關係)" },
-                    { symbol: "IBM", name: "國際商業機器 (企業IT服務)" }
+                    { symbol: "IBM", name: "國際商業機器 (企業IT服務)" },
+                    // ➕ 新增 6 家
+                    { symbol: "TXN", name: "德州儀器 (類比晶片)" },
+                    { symbol: "AMAT", name: "應用材料 (半導體設備)" },
+                    { symbol: "LRCX", name: "科林研發 (半導體設備)" },
+                    { symbol: "NOW", name: "ServiceNow (企業工作流程雲端)" },
+                    { symbol: "ADBE", name: "奧多比 (創意軟體/Photoshop)" },
+                    { symbol: "UBER", name: "優步 (全球叫車與外送平台)" }
                 ]
             },
             {
@@ -54,7 +61,14 @@
                     { symbol: "DUK", name: "杜克能源 (大型電力供應商)" },
                     { symbol: "SO", name: "南方公司 (傳統與核能發電)" },
                     { symbol: "CEG", name: "星座能源 (美國最大核能發電)" },
-                    { symbol: "BE", name: "布盧姆能源 (氫能與燃料電池發電)" }
+                    { symbol: "BE", name: "布盧姆能源 (氫能與燃料電池發電)" },
+                    // ➕ 新增 6 家
+                    { symbol: "SRE", name: "珊普能源 (天然氣與電力發電)" },
+                    { symbol: "AEP", name: "美國電力公司 (大型輸配電)" },
+                    { symbol: "D", name: "道明尼能源 (電力與天然氣)" },
+                    { symbol: "PCG", name: "太平洋瓦斯與電力 (加州電力)" },
+                    { symbol: "EXC", name: "愛克斯龍電力 (核能與公用事業)" },
+                    { symbol: "XEL", name: "瓦特電力 (再生能源與電力)" }
                 ]
             },
             {
@@ -64,7 +78,14 @@
                     { symbol: "XOM", name: "埃克森美孚 (石油巨頭)" },
                     { symbol: "CVX", name: "雪佛龍 (綜合能源)" },
                     { symbol: "COP", name: "康菲石油" },
-                    { symbol: "SLB", name: "斯倫貝謝 (油田服務)" }
+                    { symbol: "SLB", name: "斯倫貝謝 (油田服務)" },
+                    // ➕ 新增 6 家
+                    { symbol: "EOG", name: "EOG資源 (頁岩油氣開採)" },
+                    { symbol: "PXD", name: "先鋒自然資源 (石油勘探)" },
+                    { symbol: "OXY", name: "西方石油 (巴菲特重倉)" },
+                    { symbol: "MPC", name: "马拉松石油 (煉油與行銷)" },
+                    { symbol: "VLO", name: "瓦萊羅能源 (獨立煉油廠)" },
+                    { symbol: "WMB", name: "威廉姆斯公司 (能源管線運輸)" }
                 ]
             },
             {
@@ -77,7 +98,14 @@
                     { symbol: "DIS", name: "迪士尼 (娛樂/樂園/串流)" },
                     { symbol: "TMUS", name: "T-Mobile (美國電信)" },
                     { symbol: "VZ", name: "威Verizon (電信巨頭)" },
-                    { symbol: "T", name: "AT&T (美國電信)" }
+                    { symbol: "T", name: "AT&T (美國電信)" },
+                    // ➕ 新增 6 家
+                    { symbol: "CMCSA", name: "康卡斯特 (有線電視與NBC)" },
+                    { symbol: "CHTR", name: "特許通訊 (寬頻與通訊)" },
+                    { symbol: "PARA", name: "派拉蒙全球 (影視娛樂)" },
+                    { symbol: "WBD", name: "華納兄弟探索 (媒體娛樂)" },
+                    { symbol: "EA", name: "美商藝電 (遊戲開發商)" },
+                    { symbol: "TTWO", name: "Take-Two (知名遊戲發行)" }
                 ]
             },
             {
@@ -90,7 +118,14 @@
                     { symbol: "SBUX", name: "星巴克 (連鎖咖啡)" },
                     { symbol: "MCD", name: "麥當勞 (全球速食)" },
                     { symbol: "HD", name: "家得寶 (居家修繕零售)" },
-                    { symbol: "BKNG", name: "繽客控股 (線上旅遊訂房)" }
+                    { symbol: "BKNG", name: "繽客控股 (線上旅遊訂房)" },
+                    // ➕ 新增 6 家
+                    { symbol: "LOW", name: "勞氏 (居家修繕零售)" },
+                    { symbol: "TJX", name: "TJX集團 (平價服飾零售)" },
+                    { symbol: "TGT", name: "目標百貨 (大型綜合零售)" },
+                    { symbol: "MAR", name: "萬豪國際 (全球連鎖飯店)" },
+                    { symbol: "ABNB", name: "愛彼迎 (民宿短租平台)" },
+                    { symbol: "F", name: "福特汽車 (傳統汽車製造)" }
                 ]
             },
             {
@@ -102,7 +137,14 @@
                     { symbol: "KO", name: "可口可樂 (飲料帝國)" },
                     { symbol: "PEP", name: "百事可樂 (食品與飲料)" },
                     { symbol: "COST", name: "好市多 (會員制倉儲量販)" },
-                    { symbol: "PM", name: "莫里斯資本 (菸草/消費)" }
+                    { symbol: "PM", name: "莫里斯資本 (菸草/消費)" },
+                    // ➕ 新增 6 家
+                    { symbol: "MO", name: "奧馳亞集團 (美國菸草)" },
+                    { symbol: "CL", name: "高露潔棕欖 (個人護理清潔)" },
+                    { symbol: "MDLZ", name: "億滋國際 (零食與巧克力)" },
+                    { symbol: "KMB", name: "金佰利克拉克 (衛生紙/紙尿褲)" },
+                    { symbol: "GIS", name: "通用磨坊 (食品雜貨)" },
+                    { symbol: "STZ", name: "星座品牌 (酒類與啤酒)" }
                 ]
             },
             {
@@ -115,7 +157,14 @@
                     { symbol: "PFE", name: "輝瑞 (跨國製藥廠)" },
                     { symbol: "MRK", name: "默沙東 (製藥與疫苗)" },
                     { symbol: "ABBV", name: "艾伯維 (生物製藥)" },
-                    { symbol: "AMGN", name: "安進 (生物科技)" }
+                    { symbol: "AMGN", name: "安進 (生物科技)" },
+                    // ➕ 新增 6 家
+                    { symbol: "TMO", name: "賽默飛世爾 (科學儀器與檢測)" },
+                    { symbol: "ABT", name: "亞培 (醫療器材與營養品)" },
+                    { symbol: "DHR", name: "丹納赫 (生命科學與診斷)" },
+                    { symbol: "MDT", name: "美敦力 (醫療器材大廠)" },
+                    { symbol: "CVS", name: "CVS健康 (藥局與醫療服務)" },
+                    { symbol: "GILD", name: "吉利德科學 (抗病毒藥物生技)" }
                 ]
             },
             {
@@ -129,7 +178,14 @@
                     { symbol: "BAC", name: "美國銀行 (零售商業銀行)" },
                     { symbol: "WFC", name: "富國銀行" },
                     { symbol: "GS", name: "高盛集團 (投資銀行)" },
-                    { symbol: "AXP", name: "美國運通 (信用卡)" }
+                    { symbol: "AXP", name: "美國運通 (信用卡)" },
+                    // ➕ 新增 6 家
+                    { symbol: "MS", name: "摩根士丹利 (證券與財管)" },
+                    { symbol: "C", name: "花旗集團 (跨國金融服務)" },
+                    { symbol: "BLK", name: "貝萊德 (全球最大資管)" },
+                    { symbol: "SCHW", name: "嘉信理財 (美國證券經紀)" },
+                    { symbol: "PGR", name: "前进保险 (汽車保險)" },
+                    { symbol: "PYPL", name: "PayPal (線上支付)" }
                 ]
             },
             {
@@ -141,7 +197,14 @@
                     { symbol: "BA", name: "波音 (航太與飛機製造)" },
                     { symbol: "UNP", name: "聯合太平洋鐵路" },
                     { symbol: "HON", name: "漢威聯合 (多元工業)" },
-                    { symbol: "UPS", name: "優比速 (全球物流運輸)" }
+                    { symbol: "UPS", name: "優比速 (全球物流運輸)" },
+                    // ➕ 新增 6 家
+                    { symbol: "RTX", name: "雷神技術 (航太與國防軍工)" },
+                    { symbol: "LMT", name: "洛克希德馬丁 (全球軍工霸主)" },
+                    { symbol: "DE", name: "迪爾公司 (約翰迪爾農機具)" },
+                    { symbol: "FDX", name: "聯邦快遞 (全球快遞物流)" },
+                    { symbol: "MMM", name: "3M公司 (多元科技與工業)" },
+                    { symbol: "GEV", name: "GE Vernova (電力設備與能源)" }
                 ]
             }
         ];
